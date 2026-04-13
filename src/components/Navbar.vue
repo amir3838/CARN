@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { onAuthStateChanged } from 'firebase/auth'
 
 // المسار الصحيح للوصول للملف اللي بره الـ src
-import { auth, signInWithGoogle, logout, signInEmail, signUpEmail } from '../../firebase-auth.js'
+import { auth, signInWithGoogle, logout, signInEmail, signUpEmail } from '../firebase-auth.js'
 
 const user = ref(null)
 const showModal = ref(false)

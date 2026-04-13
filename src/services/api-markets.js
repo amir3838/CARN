@@ -1,4 +1,4 @@
-const GNEWS_API_KEY = "8e7930c9d2f5838ae01f79c5b443e3a5";
+const GNEWS_API_KEY = "4b151a11970a4b8992ecf756cc4e6a6e";
 const GNEWS_BASE = "https://gnews.io/api/v4/search";
 
 function createStatus(message, isError = false) {
