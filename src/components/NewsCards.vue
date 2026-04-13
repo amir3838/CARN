@@ -65,42 +65,30 @@ const loading = ref(true)
 const currentPage = ref(1)
 
 const fetchLiveNews = async (page = 1) => {
-  const API_KEY = '8e7930c9d2f5838ae01f79c5b443e3a5';
   loading.value = true;
-  
-  const getSubList = async (query, category) => {
-    try {
-      // الـ API بيدعم باراميتر الـ page للأخبار الأقدم
-      const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=en&max=9&page=${page}&apikey=${API_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      return (data.articles || []).map(a => ({
-        category: category,
-        title: a.title,
-        desc: a.description,
-        image: a.image || (category === 'AUTO NEWS' ? 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=500' : 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500'),
-        source: a.source.name,
-        time: new Date(a.publishedAt).toLocaleDateString(),
-        url: a.url
-      }));
-    } catch { return []; }
-  };
-
   try {
-    // جلب 9 أخبار عربيات و 9 أخبار معادن عشان المجموع يبقى 18 (مقسمة على 3 صفوف بالملي)
-    const [cars, metals] = await Promise.all([
-      getSubList('"luxury cars" OR supercar OR "concept car"', 'AUTO NEWS'),
-      getSubList('gold OR "precious metals" OR silver', 'METALS')
-    ]);
+    const response = await fetch(`/api/market-news?page=${page}`);
+    if (!response.ok) throw new Error("Server Error");
 
-    // دمج وعمل Shuffle خفيف
-    newsList.value = [...cars, ...metals].sort(() => Math.random() - 0.5);
+    const data = await response.json();
+    const rawArticles = data.articles || [];
+
+    newsList.value = rawArticles.map((a, index) => ({
+      category: a.title?.toLowerCase().includes('gold') ? 'METALS' : 'AUTO NEWS',
+      title: a.title || "No Title",
+      desc: a.description || "Click view source to read more about this update.",
+      image: a.urlToImage || a.image || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500',
+      source: a.source?.name || "Market News",
+      time: a.publishedAt ? new Date(a.publishedAt).toLocaleDateString() : "Live",
+      url: a.url || "#"
+    }));
+
   } catch (error) {
     console.error("News Error:", error);
   } finally {
     loading.value = false;
-    // سكرول لفوق عشان المستخدم يشوف بداية الصفحة الجديدة
-    window.scrollTo({ top: document.getElementById('news').offsetTop - 100, behavior: 'smooth' });
+    const newsEl = document.getElementById('news');
+    if (newsEl) window.scrollTo({ top: newsEl.offsetTop - 100, behavior: 'smooth' });
   }
 }
 
@@ -116,13 +104,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* التنسيق الأساسي والشبكة */
 .news-section { width: 100%; max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
 .news-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 30px; }
 @media (min-width: 768px) { .news-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1024px) { .news-grid { grid-template-columns: repeat(3, 1fr); } }
 
-/* الكروت الزجاجية */
 .news-card {
   display: flex; flex-direction: column; background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; overflow: hidden;
@@ -140,12 +126,10 @@ onMounted(() => {
 .icon-arrow { width: 14px !important; height: 14px !important; fill: currentColor; }
 .time-stamp { color: #666; font-size: 10px; font-weight: bold; }
 
-/* هيدر القسم */
 .section-header { text-align: left; margin-bottom: 40px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; }
 .title { color: #fff; font-size: 32px; letter-spacing: -1px; }
 .subtitle { color: #888; font-size: 14px; }
 
-/* نظام الصفحات "عطري" */
 .pagination-container {
   display: flex; justify-content: center; align-items: center;
   gap: 30px; margin-top: 60px; padding: 20px;
